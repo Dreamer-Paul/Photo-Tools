@@ -43,8 +43,8 @@ export function AddImages({ onAdd }: { onAdd: (files: File[]) => void }) {
           e.target.value = "";
         }}
       />
-      <span className="font-medium">点击或拖拽图片到此处</span>
-      <span className="text-xs text-zinc-500">支持 PNG / JPEG / WebP，可一次添加多张</span>
+      <span className="font-medium">点击、拖拽或粘贴图片</span>
+      <span className="text-xs text-zinc-500">支持 PNG / JPEG / WebP，Ctrl+V 可粘贴剪贴板图片</span>
     </button>
   );
 }

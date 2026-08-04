@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CompareMode, Crop, ImageItem } from "@/types";
 import { composeCrop, loadImageItem } from "@/lib/images";
+import { usePasteImages } from "@/hooks/use-paste-images";
 import { AddImages } from "@/components/add-images";
 import { ImageList } from "@/components/image-list";
 import { PreviewArea } from "@/components/preview-area";
@@ -24,6 +25,8 @@ function App() {
     const failed = results.length - loaded.length;
     if (failed > 0) alert(`有 ${failed} 个文件无法作为图片加载`);
   };
+
+  usePasteImages(handleAdd);
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) => {
