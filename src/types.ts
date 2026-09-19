@@ -21,3 +21,17 @@ export interface ImageItem {
 }
 
 export type CompareMode = "divider" | "flicker";
+
+export type ToolId = "compare" | "collage";
+
+export interface AspectRatio {
+  id: string;
+  label: string;
+  w: number;
+  h: number;
+}
+
+export interface GridLayout {
+  rows: number;
+  cols: number;
+}

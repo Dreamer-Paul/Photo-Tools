@@ -7,6 +7,8 @@ interface ImageListProps {
   selectedIds: string[];
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
+  /** compare 显示 A/B；collage 显示勾选序号 */
+  badgeMode?: "compare" | "collage";
 }
 
 const THUMB = 56;
@@ -25,7 +27,7 @@ function Thumbnail({ item }: { item: ImageItem }) {
   );
 }
 
-export function ImageList({ items, selectedIds, onToggle, onRemove }: ImageListProps) {
+export function ImageList({ items, selectedIds, onToggle, onRemove, badgeMode = "compare" }: ImageListProps) {
   if (items.length === 0) {
     return <p className="px-1 py-6 text-center text-sm text-zinc-600">还没有图片，先在上方添加</p>;
   }
@@ -76,8 +78,8 @@ export function ImageList({ items, selectedIds, onToggle, onRemove }: ImageListP
                 </div>
               </div>
               {selected && (
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-sky-500 text-xs font-bold text-white">
-                  {selectedIndex === 0 ? "A" : "B"}
+                <span className="grid h-6 min-w-6 shrink-0 place-items-center rounded-full bg-sky-500 px-1 text-xs font-bold text-white">
+                  {badgeMode === "collage" ? selectedIndex + 1 : selectedIndex === 0 ? "A" : "B"}
                 </span>
               )}
             </div>
