@@ -9,10 +9,10 @@ import {
   defaultLayout,
   drawCollage,
   exportCollagePng,
+  layoutKey,
   layoutOptionLabel,
   layoutsForCount,
   loadElement,
-  sameLayout,
   sizeFromHeight,
   sizeFromWidth,
 } from "@/lib/collage";
@@ -34,12 +34,8 @@ export function CollageArea({ items }: CollageAreaProps) {
   const layouts = useMemo(() => layoutsForCount(n), [n]);
 
   useEffect(() => {
-    const next = defaultLayout(n);
-    setLayout((prev) => {
-      if (prev && layouts.some((l) => sameLayout(l, prev))) return prev;
-      return next;
-    });
-  }, [n, layouts]);
+    setLayout(defaultLayout(n));
+  }, [n]);
 
   const applySize = (next: { width: number; height: number }) => {
     setSize(next);
@@ -143,15 +139,15 @@ export function CollageArea({ items }: CollageAreaProps) {
           <label className="flex items-center gap-1 text-xs text-zinc-400">
             <span className="text-zinc-500">布局</span>
             <select
-              value={`${layout.rows}x${layout.cols}`}
+              value={layoutKey(layout)}
               onChange={(e) => {
-                const next = layouts.find((l) => `${l.rows}x${l.cols}` === e.target.value);
+                const next = layouts.find((l) => layoutKey(l) === e.target.value);
                 if (next) setLayout(next);
               }}
               className="max-w-52 rounded bg-zinc-900 px-1.5 py-1 text-zinc-200 ring-1 ring-zinc-700"
             >
               {layouts.map((l) => (
-                <option key={`${l.rows}x${l.cols}`} value={`${l.rows}x${l.cols}`}>
+                <option key={layoutKey(l)} value={layoutKey(l)}>
                   {layoutOptionLabel(l, n)}
                 </option>
               ))}

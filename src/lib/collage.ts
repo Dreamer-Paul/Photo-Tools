@@ -28,8 +28,20 @@ function addFactorLayouts(target: number, into: Map<string, GridLayout>) {
   }
 }
 
+/** 上半整幅、下半左右各一格。rows/cols 只用于和均匀布局一起排序 */
+export const BANNER_SPLIT_LAYOUT: GridLayout = { rows: 2, cols: 2, kind: "banner-split" };
+
+export function layoutKey(layout: GridLayout): string {
+  return layout.kind === "banner-split" ? "banner-split" : `${layout.rows}x${layout.cols}`;
+}
+
+export function layoutCellCount(layout: GridLayout): number {
+  if (layout.kind === "banner-split") return 3;
+  return layout.rows * layout.cols;
+}
+
 function layoutScore(a: GridLayout, n: number) {
-  const cells = a.rows * a.cols;
+  const cells = layoutCellCount(a);
   return {
     slack: Math.abs(cells - n),
     square: Math.abs(a.rows - a.cols),
@@ -55,10 +67,13 @@ export function layoutsForCount(n: number): GridLayout[] {
   if (n < 1) return [];
   const map = new Map<string, GridLayout>();
   for (const target of [n - 1, n, n + 1, n + 2]) addFactorLayouts(target, map);
-  return [...map.values()].sort((a, b) => compareLayouts(a, b, n));
+  const layouts = [...map.values()];
+  if (n === 3) layouts.push(BANNER_SPLIT_LAYOUT);
+  return layouts.sort((a, b) => compareLayouts(a, b, n));
 }
 
 export function layoutOptionLabel(layout: GridLayout, n: number): string {
+  if (layout.kind === "banner-split") return "上宽下双";
   const cells = layout.rows * layout.cols;
   const base = `${layout.rows}×${layout.cols}`;
   if (cells === n) return base;
@@ -70,13 +85,16 @@ export function layoutOptionLabel(layout: GridLayout, n: number): string {
 export function defaultLayout(n: number): GridLayout | null {
   const layouts = layoutsForCount(n);
   if (layouts.length === 0) return null;
-  const fitting = layouts.filter((l) => l.rows * l.cols >= n);
+  const fitting = layouts.filter((l) => layoutCellCount(l) >= n);
   const pool = fitting.length > 0 ? fitting : layouts;
   return [...pool].sort((a, b) => compareLayouts(a, b, n))[0];
 }
 
 /** 多出来的空格落在最靠近画布中心的格子上，其余按勾选顺序填图 */
 export function cellImageIndices(layout: GridLayout, imageCount: number): (number | null)[] {
+  if (layout.kind === "banner-split") {
+    return [0, 1, 2].map((i) => (i < imageCount ? i : null));
+  }
   const { rows, cols } = layout;
   const total = rows * cols;
   const slots: (number | null)[] = Array.from({ length: total }, () => null);
@@ -108,7 +126,7 @@ export function cellImageIndices(layout: GridLayout, imageCount: number): (numbe
 
 export function sameLayout(a: GridLayout | null, b: GridLayout | null): boolean {
   if (!a || !b) return a === b;
-  return a.rows === b.rows && a.cols === b.cols;
+  return layoutKey(a) === layoutKey(b);
 }
 
 export function clampResolution(width: number, height: number): { width: number; height: number } {
@@ -142,6 +160,22 @@ export interface CellRect {
   y: number;
   w: number;
   h: number;
+}
+
+/** 按布局切出每格矩形。均匀分格时最后一行/列吃掉余数，避免露缝 */
+export function layoutCellRects(canvasW: number, canvasH: number, layout: GridLayout): CellRect[] {
+  if (layout.kind === "banner-split") {
+    const topH = Math.floor(canvasH / 2);
+    const bottomH = canvasH - topH;
+    const leftW = Math.floor(canvasW / 2);
+    const rightW = canvasW - leftW;
+    return [
+      { x: 0, y: 0, w: canvasW, h: topH },
+      { x: 0, y: topH, w: leftW, h: bottomH },
+      { x: leftW, y: topH, w: rightW, h: bottomH },
+    ];
+  }
+  return cellRects(canvasW, canvasH, layout.rows, layout.cols);
 }
 
 /** 均匀分格；最后一行/列吃掉余数，避免露缝 */
@@ -219,7 +253,7 @@ export function drawCollage(
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, width, height);
 
-  const cells = cellRects(width, height, layout.rows, layout.cols);
+  const cells = layoutCellRects(width, height, layout);
   const slots = cellImageIndices(layout, items.length);
 
   for (let i = 0; i < cells.length; i++) {
@@ -246,7 +280,7 @@ export function drawCollage(
     );
   }
 
-  if (options.gridLines && layout.rows * layout.cols > 1) {
+  if (options.gridLines && cells.length > 1) {
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,0.35)";
     ctx.lineWidth = Math.max(1, width / 800);

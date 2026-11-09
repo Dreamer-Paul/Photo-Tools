@@ -34,4 +34,9 @@ export interface AspectRatio {
 export interface GridLayout {
   rows: number;
   cols: number;
+  /**
+   * 非均匀布局。缺省为 rows×cols 等分。
+   * banner-split：上半整幅一格，下半左右各一格（共 3 格）。
+   */
+  kind?: "banner-split";
 }
